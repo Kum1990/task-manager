@@ -199,7 +199,11 @@ select {
 
 .task-item.status-done {
   border-left-color: var(--success);
-  opacity: 0.75;
+}
+
+/* Fade only the task content, so the actions still look clickable. */
+.task-item.status-done .task-main {
+  opacity: 0.6;
 }
 
 .task-item.status-done .task-title {
