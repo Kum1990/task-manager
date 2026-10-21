@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  backend:
+    name: Backend - lint and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: taskuser
+          POSTGRES_PASSWORD: taskpass
+          POSTGRES_DB: taskdb_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U taskuser -d taskdb_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      # GitHub runners reach the service on localhost; act reaches it by service name.
+      - name: Point integration tests at the Postgres service
+        run: |
+          if [ -n "${ACT:-}" ]; then DB_HOST=postgres; else DB_HOST=localhost; fi
+          echo "TEST_DATABASE_URL=postgres://taskuser:taskpass@${DB_HOST}:5432/taskdb_test" >> "$GITHUB_ENV"
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - name: Unit tests
+        run: npm test -- --coverage
+      - name: Integration tests
+        run: npm run test:integration
+
+  frontend:
+    name: Frontend - lint, test and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run build
+
+  docker:
+    name: Build images and run integration tests
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .env for docker compose
+        run: cp .env.example .env
+
+      - name: Build Docker images
+        run: docker compose build
+
+      - name: Start the stack
+        run: docker compose up -d --wait --wait-timeout 180
+
+      - name: Smoke test through the Nginx proxy
+        run: |
+          docker run --rm -i --network task-manager_frontend-net --entrypoint sh \
+            curlimages/curl:8.11.1 -s -- http://proxy:8080 < scripts/smoke-test.sh
+
+      - name: List built images
+        run: docker images --filter "reference=task-manager-*"
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v --remove-orphans
