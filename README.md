@@ -177,4 +177,4 @@ ESLint (recommended rules, plus React Hooks rules in the frontend) + Prettier (s
 
 ## Future improvements
 
-HTTPS via cert-manager, rate limiting on auth endpoints, a refresh-token flow, pagination, Prometheus metrics, a Helm chart, and a persistent volume for Postgres.
+HTTPS via cert-manager, rate limiting on auth endpoints, a refresh-token flow, pagination, soft delete with undo (a `deleted_at` column and a restore action, so the current permanent delete becomes recoverable), Prometheus metrics, a Helm chart, and a persistent volume for Postgres.
