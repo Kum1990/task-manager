@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.env
+*.log
+*.zip
+.DS_Store
+
+# Personal prep notes (not part of the submission)
+IMPLEMENTATION_PLAN.md

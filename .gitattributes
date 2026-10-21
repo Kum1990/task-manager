@@ -1,0 +1,2 @@
+# Keep LF line endings on Windows so shell scripts run in containers and Prettier checks pass.
+* text=auto eol=lf
