@@ -254,6 +254,12 @@ select {
   font-weight: 600;
 }
 
+.confirm-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
 .task-actions,
 .actions {
   display: flex;

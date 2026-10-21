@@ -14,6 +14,8 @@ function isOverdue(task) {
 export default function TaskItem({ task, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(null);
+  // Deletion is permanent, so the Delete button asks for confirmation first.
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   function startEditing() {
     setDraft({
@@ -103,35 +105,51 @@ export default function TaskItem({ task, onUpdate, onDelete }) {
           )}
         </div>
       </div>
-      <div className="task-actions">
-        <select
-          aria-label={`Status of ${task.title}`}
-          value={task.status}
-          onChange={(event) => onUpdate(task.id, { status: event.target.value })}
-        >
-          {STATUS_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          aria-label={`Edit ${task.title}`}
-          onClick={startEditing}
-        >
-          Edit
-        </button>
-        <button
-          type="button"
-          className="btn btn-danger"
-          aria-label={`Delete ${task.title}`}
-          onClick={() => onDelete(task.id)}
-        >
-          Delete
-        </button>
-      </div>
+      {confirmingDelete ? (
+        <div className="task-actions" role="group" aria-label={`Confirm deletion of ${task.title}`}>
+          <span className="confirm-text">Delete this task?</span>
+          <button type="button" className="btn btn-danger" onClick={() => onDelete(task.id)}>
+            Yes, delete
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setConfirmingDelete(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <div className="task-actions">
+          <select
+            aria-label={`Status of ${task.title}`}
+            value={task.status}
+            onChange={(event) => onUpdate(task.id, { status: event.target.value })}
+          >
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            aria-label={`Edit ${task.title}`}
+            onClick={startEditing}
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            className="btn btn-danger"
+            aria-label={`Delete ${task.title}`}
+            onClick={() => setConfirmingDelete(true)}
+          >
+            Delete
+          </button>
+        </div>
+      )}
     </li>
   );
 }

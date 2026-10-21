@@ -29,14 +29,30 @@ describe('TaskItem', () => {
     expect(onUpdate).toHaveBeenCalledWith(7, { status: 'done' });
   });
 
-  it('calls onDelete with the task id', async () => {
+  it('asks for confirmation before deleting', async () => {
     const onDelete = vi.fn();
     const user = userEvent.setup();
     render(<TaskItem task={task} onUpdate={vi.fn()} onDelete={onDelete} />);
 
     await user.click(screen.getByRole('button', { name: 'Delete Write README' }));
+    expect(onDelete).not.toHaveBeenCalled();
+    expect(screen.getByText('Delete this task?')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
 
     expect(onDelete).toHaveBeenCalledWith(7);
+  });
+
+  it('does not delete when the confirmation is cancelled', async () => {
+    const onDelete = vi.fn();
+    const user = userEvent.setup();
+    render(<TaskItem task={task} onUpdate={vi.fn()} onDelete={onDelete} />);
+
+    await user.click(screen.getByRole('button', { name: 'Delete Write README' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onDelete).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Delete Write README' })).toBeInTheDocument();
   });
 
   it('edits and saves the title', async () => {
