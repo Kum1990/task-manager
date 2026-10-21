@@ -39,10 +39,12 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
-      # GitHub runners reach the service on localhost; act reaches it by service name.
+      # GitHub runners (and act on the host network) reach the service on localhost;
+      # older act versions put the job on the service network, where it is reachable by name.
       - name: Point integration tests at the Postgres service
         run: |
-          if [ -n "${ACT:-}" ]; then DB_HOST=postgres; else DB_HOST=localhost; fi
+          if getent hosts postgres > /dev/null; then DB_HOST=postgres; else DB_HOST=localhost; fi
+          echo "Using Postgres host: $DB_HOST"
           echo "TEST_DATABASE_URL=postgres://taskuser:taskpass@${DB_HOST}:5432/taskdb_test" >> "$GITHUB_ENV"
 
       - run: npm ci
