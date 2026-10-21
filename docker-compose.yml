@@ -1,0 +1,63 @@
+name: task-manager
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-taskuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskpass}
+      POSTGRES_DB: ${POSTGRES_DB:-taskdb}
+    # Non-persistent by design: data lives in memory and is gone after `docker compose down`.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [backend-net]
+
+  backend:
+    build: ./backend
+    image: task-manager-backend:${IMAGE_TAG:-latest}
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgres://${POSTGRES_USER:-taskuser}:${POSTGRES_PASSWORD:-taskpass}@db:5432/${POSTGRES_DB:-taskdb}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: http://localhost:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    restart: unless-stopped
+    networks: [backend-net, frontend-net]
+
+  frontend:
+    build: ./frontend
+    image: task-manager-frontend:${IMAGE_TAG:-latest}
+    read_only: true
+    tmpfs: [/tmp]
+    restart: unless-stopped
+    networks: [frontend-net]
+
+  proxy:
+    build: ./nginx
+    image: task-manager-proxy:${IMAGE_TAG:-latest}
+    ports:
+      - '8080:8080'
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    restart: unless-stopped
+    networks: [frontend-net]
+
+networks:
+  frontend-net:
+  backend-net:
