@@ -101,7 +101,7 @@ The Vite dev server proxies `/api` to `localhost:4000`, the same path layout Ngi
 2. **frontend**: lint, format check, tests, production build
 3. **docker** (after 1 and 2 pass): build all images, start the stack with compose, run the smoke test through Nginx, show logs on failure, tear down
 
-Run it locally with [act](https://nektosact.com): `act push` (or `act -j docker` for one job). `.actrc` pins the runner image and sets `--pull=false`, so act reuses local images (faster, works offline, and avoids Docker Hub credential-helper errors). Pull the images once beforehand: `docker pull catthehacker/ubuntu:act-latest postgres:16-alpine curlimages/curl:8.11.1`.
+Run it locally with [act](https://nektosact.com): `act push` (or `act -j docker` for one job). `.actrc` pins the runner image and sets `--pull=false`, so act reuses local images (faster, works offline, and avoids Docker Hub credential-helper errors). Pull the images once beforehand: `for i in catthehacker/ubuntu:act-latest postgres:16-alpine curlimages/curl:8.11.1; do docker pull $i; done`.
 
 ## Kubernetes
 
