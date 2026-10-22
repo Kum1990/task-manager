@@ -1,5 +1,7 @@
 # Task Manager: Full-Stack MVC App with Local CI/CD
 
+[![CI](https://github.com/Kum1990/task-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Kum1990/task-manager/actions/workflows/ci.yml)
+
 A multi-user task manager. Users register, sign in, and manage their own tasks: create, list, filter, edit, and delete. The project runs a production-like setup on a laptop: containers, a reverse proxy, a CI pipeline, and Kubernetes.
 
 ## Architecture
